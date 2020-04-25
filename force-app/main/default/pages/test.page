@@ -1,0 +1,25 @@
+<apex:page showHeader="false" showQuickActionVfHeader="false" sidebar="false" standardStylesheets="false"  >
+  <div style="width:100px">
+  <!-- Begin Default Content REMOVE THIS -->
+  <h1>Congratulations</h1>
+  This is your new Page: test
+  <!-- End Default Content REMOVE THIS -->
+   
+   <input type="button" onclick="abc();" value="Go to Attribute" />
+   <input type="button" onclick="close1();" value="Close" />
+   </div>
+   <script>
+function abc() {
+    window.top.location.href= '/apex/Apttus_Config2__Cart?configRequestId=a2N0H00000Dg2HsUAJ&cartStatus=New&id=a1y0H000002NZ2nQAG&flow=NGDefault#!/configure/10002';
+    return false;
+    
+}
+function close1(){
+alert('test12345');
+close();
+return false;
+ /*parent.window.top.location.href= '/apex/Apttus_Config2__Cart?configRequestId=a2N0H00000Dg2HsUAJ&cartStatus=New&id=a1y0H000002NZ2nQAG&flow=NGDefault#!/configure/10002';*/
+ 
+}
+</script>
+</apex:page>

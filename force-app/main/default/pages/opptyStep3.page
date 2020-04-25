@@ -1,0 +1,22 @@
+<apex:page controller="newOpportunityController" >
+  <apex:form >
+      <apex:sectionHeader title="Third Step" subtitle="3 of 4 steps"/>
+      <apex:pageBlock title="Third Block">
+          <apex:pageBlockButtons >
+              
+              <apex:commandButton value="Previous" action="{!step2_1}" />
+          </apex:pageBlockButtons>
+          <apex:pageBlockSection title="Third Section">
+              <apex:outputField value="{!position.Name}"></apex:outputField>
+              <apex:outputField value="{!position.Max_Pay__c}"></apex:outputField>
+              <apex:outputField value="{!position.Open_Date__c}"></apex:outputField>
+              <apex:outputField value="{!position.Skills_Required__c}"></apex:outputField>
+              <apex:outputField value="{!position.Job_Description__c}"></apex:outputField>
+              <apex:outputField value="{!position.Min_Salary__c}"></apex:outputField>
+              
+              <apex:outputField value="{!position.Close_Date__c}"></apex:outputField>
+              <apex:outputField value="{!position.Travel_Required__c}"></apex:outputField>
+          </apex:pageBlockSection>
+      </apex:pageBlock>
+      </apex:form>
+</apex:page>

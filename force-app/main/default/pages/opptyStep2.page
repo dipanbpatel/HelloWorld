@@ -1,0 +1,15 @@
+<apex:page controller="newOpportunityController" >
+   <apex:form >
+      <apex:sectionHeader title="First Step" subtitle="2 of 4 steps"/>
+      <apex:pageBlock title="Second Block">
+          <apex:pageBlockButtons >
+              <apex:commandButton value="Next" action="{!step2_1}" />
+              <apex:commandButton value="Previous" action="{!step1}" />
+          </apex:pageBlockButtons>
+          <apex:pageBlockSection title="Second Section">
+              <apex:inputField value="{!position.Skills_Required__c}"/>
+              <apex:inputField value="{!position.Job_Description__c}"/>
+          </apex:pageBlockSection>
+      </apex:pageBlock>
+      </apex:form>
+</apex:page>

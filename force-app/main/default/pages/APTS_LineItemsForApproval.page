@@ -1,0 +1,168 @@
+<apex:page standardController="Apttus__AgreementLineItem__c"
+    extensions="APTS_LineItemsForApprovalController"  recordSetVar="agreementLineItem">
+  
+ <script type="text/javascript" src="/soap/ajax/29.0/connection.js"></script>
+  <script type="text/javascript" src="/soap/ajax/29.0/apex.js"></script>
+  
+  <apex:stylesheet value="{!URLFOR($Resource.Apttus_Approval__YUILibrary, '/yui/build/assets/skins/sam/skin.css')}" />
+
+    <apex:includescript value="{!URLFOR($Resource.Apttus_Approval__YUILibrary, '/yui/build/yahoo-dom-event/yahoo-dom-event.js')}" />
+    <apex:includescript value="{!URLFOR($Resource.Apttus_Approval__YUILibrary, '/yui/build/dragdrop/dragdrop-min.js')}" />
+    <apex:includescript value="{!URLFOR($Resource.Apttus_Approval__YUILibrary, '/yui/build/container/container-min.js')}" />
+    <apex:includescript value="{!URLFOR($Resource.Apttus_Approval__YUILibrary, '/yui/build/animation/animation-min.js')}" />
+
+  
+  <apex:form >
+        <script>
+            // Create a namespace for our custom functions
+            YAHOO.namespace("force.com");
+           
+            /**
+             * Initializes the call
+             */
+            function initCall() {
+                try {
+                    sforce.connection.sessionId = "{!$Api.Session_ID}"; //to avoid session timeout
+                } catch(e) {
+                    cp_erroralert(cp_cERROR_UNKNOWN,e);
+                }
+            }
+            // wait panel
+            
+            /**
+             * Builds the wait panel.
+             */
+            YAHOO.force.com.buildWaitPanel = function() {
+                document.body.className = document.body.className + " yui-skin-sam";
+                YAHOO.force.com.waitPanel = new YAHOO.widget.Panel(
+                    "waitPanel",  // The id of our dialog container
+                    { 
+                            width           :   "300px", // You can play with this until it's right
+                            visible         :   false,   // Should be invisible when rendered
+                            draggable       :   false,   // Make the dialog draggable
+                            close           :   false,   // Don't include a close title button
+                            modal           :   true,    // Make it modal
+                            fixedCenter     :   true,    // Keep centered if window is scrolled
+                            zindex          :   40,      // Make sure it's on top of everything
+                            constraintoviewport: true,
+                            
+                            // This line adds the appear/disapper fade effect
+                            effect          :   {effect:YAHOO.widget.ContainerEffect.FADE,duration:0.25}
+                                        
+                    }
+                );
+                
+                // header
+                
+                YAHOO.force.com.waitPanel.setHeader("{!$Label.Apttus_Approval__SubmittingApprovals2}");
+                
+                // set image
+                YAHOO.force.com.waitPanel.setBody('<center><img src="{!URLFOR($Resource.Apttus__Image_LoadingPage)}" /></center>');
+                // Render the dialog to the document.body level of the DOM
+                YAHOO.force.com.waitPanel.render(document.body);
+                
+            }
+            
+            // Function called when the DOM is ready to create the dialog,
+            // render the dialog into the document body, add our dialog skin
+            // css to the body tag, and wire up the buttons on our dialog   
+            YAHOO.force.com.onDOMReady = function() {
+                
+                // build the wait panel
+                YAHOO.force.com.buildWaitPanel();
+                
+            }
+          window.onload = function() {
+                
+                // build wait panels
+                YAHOO.force.com.onDOMReady();
+                 
+                // refresh uom descriptions
+                invokeDoStartSubmit();
+            }       
+            
+        </script>
+
+        <apex:pageBlock >
+
+            <apex:outputPanel id="idErrorMsg">
+                <apex:pageMessages />
+            </apex:outputPanel>
+
+            <apex:outputPanel id="idProcessEach">
+                <apex:outputPanel rendered="{!startSubmit}">
+                    <script type="text/javascript">
+                        // get line item ids
+                        var sObjectIdList = new Array();                
+                    </script>
+                
+                    <apex:repeat value="{!lineItemIds}" var="itemId">
+                        <script type="text/javascript">
+                                var item = new Object();
+                                item = "{!itemId}";
+                                sObjectIdList.push(item);
+                            </script>
+                    </apex:repeat>
+
+                    <script type="text/javascript">
+            
+                            if (sObjectIdList.length > 0) {
+                                // show modal panel
+                                YAHOO.force.com.waitPanel.show();
+                                
+                                // delay to allow the progress bar to be shown  
+                                setTimeout(function() {
+                                    var objId = "";
+                                    try {
+                                        
+                                        var count = sObjectIdList.length;
+                                        initCall();
+                                        
+                                        for (var i = 0; i < count; i++) {
+                                            objId = sObjectIdList[i];
+                                            sforce.apex.execute("Apttus_Approval.ApprovalsWebService", "submitForApprovals"
+                                                                    , {sObjectType:"Apttus__AgreementLineItem__c"
+                                                                    , sObjectId:objId})                                                 
+                                        }
+                                        
+                                    } catch(e) {
+                                        alert(e);
+                                        
+                                    } finally {
+                                        // show modal panel
+                                        YAHOO.force.com.waitPanel.hide();
+                                        invokeDoCompleteSubmit();
+                                    }
+                                    
+                                }, 500);    
+                                }else{
+                                    // show modal panel
+                                    //This case is not implemented, this is for if the release approver
+                                    //not found in approval the blank page is appear
+                                    //Added by Axay 12/04
+                                    setTimeout(function(){
+                                     
+                                            YAHOO.force.com.waitPanel.show();
+                                            invokeDoCompleteSubmit();
+                                    },500);
+                                    
+                                }
+                        </script>
+                 </apex:outputPanel>
+            </apex:outputPanel>
+
+            <!-- This panel represents the waiting dialog that will pop up -->
+            <apex:outputPanel >
+                <div id="waitPanel"></div>
+            </apex:outputPanel>
+
+            <apex:actionFunction name="invokeDoStartSubmit"
+                action="{!doStartSubmit}" rerender="idProcessEach" />
+
+            <apex:actionFunction name="invokeDoCompleteSubmit"
+                action="{!doCompleteSubmit}" />
+
+        </apex:pageBlock>
+    </apex:form> 
+    
+</apex:page>

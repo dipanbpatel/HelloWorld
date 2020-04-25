@@ -1,0 +1,1437 @@
+<!-- 
+    Apttus Config & Pricing
+    AptsViewConfig
+     
+    Copyright (c) 2012 BMC Software Inc. 
+ -->
+<apex:page standardController="Apttus_Config2__ProductConfiguration__c"
+    extensions="AptsViewConfigController" showHeader="false"
+    sidebar="false" cache="false" tabstyle="Product2" action="{!doLoadItems}">
+    
+    <script type="text/javascript" src="/soap/ajax/25.0/connection.js"></script>
+    <script type="text/javascript" src="/soap/ajax/25.0/apex.js"></script>
+    <apex:include pageName="Apttus_Config2__ConfigJSLibInclude" />
+    
+    <apex:includeScript value="{!URLFOR($Resource.Apttus_Config2__YUILibrary, '/yui/build/yahoo-dom-event/yahoo-dom-event.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Apttus_Config2__YUILibrary, '/yui/build/container/container-min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Apttus_Config2__YUILibrary, '/yui/build/dragdrop/dragdrop-min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Apttus_Config2__YUILibrary, '/yui/build/animation/animation-min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Apttus_Config2__YUILibrary, '/yui/build/treeview/treeview-min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Apttus_Config2__YUILibrary, '/yui/build/menu/menu-min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Apttus_Config2__YUILibrary, '/yui/build/yahoo/yahoo-min.js')}" />
+    
+    <apex:stylesheet value="{!URLFOR($Resource.Apttus_Config2__YUILibrary, '/yui/build/assets/skins/sam/skin.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.Apttus_Config2__YUILibrary, '/yui/build/treeview/assets/skins/sam/treeview.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.Apttus_Config2__YUILibrary, '/yui/examples/treeview/assets/css/menu/tree.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.Apttus_Config2__YUILibrary, '/yui/build/menu/assets/skins/sam/menu.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.Apttus_Config2__YUILibrary, '/yui/build/container/assets/skins/sam/container.css')}" />
+    
+    <apex:stylesheet value="{!$Resource.Apttus_Config2__ConfigStyles}" />
+
+    <style>
+textarea {
+    width: 70%;
+}
+</style>
+
+    <apex:form id="idProductConfigurationForm">
+        
+        <!--  required fields -->
+        <apex:outputText value="{!Apttus_Config2__ProductConfiguration__c.Name}" rendered="false" />
+        <apex:outputText value="{!Apttus_Config2__ProductConfiguration__c.Apttus_Config2__Status__c}" rendered="false" />
+        <apex:outputText value="{!Apttus_Config2__ProductConfiguration__c.Apttus_Config2__BusinessObjectId__c}" rendered="false" />
+        <apex:outputText value="{!Apttus_Config2__ProductConfiguration__c.Apttus_Config2__IsPricePending__c}" rendered="false" />
+        <!--<apex:outputText value="{!Apttus_Config2__ProductConfiguration__c.Contains_Only_Partner_Discounts__c}" rendered="false" />-->
+        
+        <!--<apex:outputPanel id="hasErrorInApplyAllAdjustments">
+            <script>
+                /**
+                * Callback when the action is completed
+                */
+                function onApplyAllAdjustmentActionFinalizeComplete() {
+                    if ({!hasErrorInApplyAllAdjustments} == false) {
+                        invokeApplyAllAdjustmentsFinalize();
+                    } else {
+                        // hide the modal panel
+                        YAHOO.force.com.waitPanel.hide();
+                    }
+                }
+                
+               function invokeDoProcessMoreRules (){
+                   YAHOO.force.com.waitPanel.show(); 
+                   sfdcDoProcessMoreRules();
+                }
+                
+                /**
+                 * Callback when the action is completed
+                 */
+                function onActionComplete2() {
+                        // hide the modal panel
+                        if(needMoreProcessing == undefined || needMoreProcessing == false){
+                              if(!(YAHOO == undefined || YAHOO.force.com.waitPanel == undefined)){
+                                    YAHOO.force.com.waitPanel.hide();
+                              }
+                        }
+                        
+                }
+                
+                
+            </script>
+        </apex:outputPanel>-->
+
+        <script type="text/javascript">
+            
+            // Create a namespace for our custom functions
+            YAHOO.namespace("force.com");
+            
+            /**
+             * Initializes the call
+             */
+            function initCall() {
+            
+                try {
+                    sforce.connection.sessionId = "{!$Api.Session_ID}"; //to avoid session timeout
+                } catch(e) {
+                    cp_erroralert(cp_cERROR_UNKNOWN,e);
+                    
+                }
+            
+            }
+            
+            // wait panel
+            
+            /**
+             * Builds the wait panel.
+             */
+            YAHOO.force.com.buildWaitPanel = function() {
+                document.body.className = document.body.className + " yui-skin-sam";
+                YAHOO.force.com.waitPanel = new YAHOO.widget.Panel(
+                    "waitPanel",  // The id of our dialog container
+                    { 
+                            width           :   "300px", // You can play with this until it's right
+                            visible         :   false,   // Should be invisible when rendered
+                            draggable       :   false,   // Make the dialog draggable
+                            close           :   false,   // Don't include a close title button
+                            modal           :   true,    // Make it modal
+                            fixedCenter     :   true,    // Keep centered if window is scrolled
+                            zindex          :   40,      // Make sure it's on top of everything
+                            constraintoviewport: true,
+                            
+                            // This line adds the appear/disapper fade effect
+                            effect          :   {effect:YAHOO.widget.ContainerEffect.FADE,duration:0.25}
+                                        
+                    }
+                );
+                
+                // header
+                YAHOO.force.com.waitPanel.setHeader("{!$Label.apttus_config2__loadingpage}");
+                // set image
+                YAHOO.force.com.waitPanel.setBody('<center><img src="{!URLFOR($Resource.Apttus_Config2__Image_LoadingPage)}" /></center>');
+                // Render the dialog to the document.body level of the DOM
+                YAHOO.force.com.waitPanel.render(document.body);
+                
+            }
+            
+            /**
+             * Callback when the action button is clicked
+             */
+            function onActionClick() {
+                // show the modal panel
+                YAHOO.force.com.waitPanel.show();
+                // return false to allow the action to proceed
+                return false;
+                
+            }
+            
+            /**
+             * Callback when the action is completed
+             */
+            function onActionComplete() {
+                // hide the modal panel
+                YAHOO.force.com.waitPanel.hide();
+                
+            }
+            /**
+             * Callback when the action is completed
+             */
+            function onApplyAllAdjustmentActionComplete() {
+                // hide the modal panel
+                invokeApplyAllAdjustments();
+                
+            }
+            
+            /**
+             * Callback when the action is completed
+             */
+            function onApplyAllAdjustmentActionTwiceFinalizeComplete() {
+                // hide the modal panel
+                invokeApplyAllAdjustmentActionTwiceFinalizeComplete();
+                
+            }
+            // confirmation panel
+            
+            //YAHOO.force.com.myDialog = new Object();
+            //YAHOO.force.com.selectedLineNbr = new Object();
+                        
+            /**
+             * Build remove confirmation panel
+             */
+            YAHOO.force.com.buildConfirmationPanel = function() {
+            
+                document.body.className = document.body.className + " yui-skin-sam";
+                YAHOO.force.com.confirmationPanel = new YAHOO.widget.Panel(
+                    "confirmationPanel",  // The id of our dialog container
+                    { 
+                            width           :   "300px", // You can play with this until it's right
+                            visible         :   false,   // Should be invisible when rendered
+                            draggable       :   true,    // Make the dialog draggable
+                            close           :   false,   // Don't include a close title button
+                            modal           :   true,    // Make it modal
+                            fixedCenter     :   true,    // Keep centered if window is scrolled
+                            zindex          :   40,      // Make sure it's on top of everything
+                            
+                            // This line adds the appear/disapper fade effect
+                            effect          :   {effect:YAHOO.widget.ContainerEffect.FADE,duration:0.25} 
+                    }
+                 );
+                
+                // Render the dialog to the document.body level of the DOM
+                YAHOO.force.com.confirmationPanel.render(document.body);
+                //YAHOO.force.com.confirmationPanel.render();
+                
+            }
+            
+            /**
+             * Show remove confirmation dialog
+             */
+            YAHOO.force.com.showRemoveConfirmation = function(lineNumber) {
+                // save selected line item line number
+                YAHOO.force.com.selectedLineNbr = lineNumber;
+                
+                // show the confirmation panel
+                document.getElementById("confirmationPanel").style.display = "block";
+                YAHOO.force.com.confirmationPanel.show();
+                
+            }
+    
+            /**
+             * Handle remove product option group or product option component
+             */
+            YAHOO.force.com.remove = function() {
+                // hide the confirmation panel
+                YAHOO.force.com.confirmationPanel.hide();
+                // show modal panel
+                YAHOO.force.com.waitPanel.show();
+                // delete the line item
+                invokeDoDeleteLineItem(YAHOO.force.com.selectedLineNbr);
+                                
+            }
+ 
+            // miscellaneous line item panel
+                
+            /**
+             * Builds the miscellaneous item panel
+             */
+            YAHOO.force.com.buildMiscItemPanel = function() {
+                //document.body.className = document.body.className + " yui-skin-sam";
+                
+                YAHOO.force.com.miscItemPanel = new YAHOO.widget.Panel(
+                    "miscItemPanel",  // The id of our dialog container
+                    { 
+                            width           :   "400px", // You can play with this until it's right
+                            visible         :   false,   // Should be invisible when rendered
+                            draggable       :   true,    // Make the dialog draggable
+                            close           :   false,   // Don't include a close title button
+                            modal           :   true,    // Make it modal
+                            fixedCenter     :   true,    // Keep centered if window is scrolled
+                            zindex          :   40,      // Make sure it's on top of everything
+                            
+                            // This line adds the appear/disapper fade effect
+                            effect          :   {effect:YAHOO.widget.ContainerEffect.FADE,duration:0.25} 
+                    }
+                 );
+                
+                // Render the dialog to the document.body level of the DOM
+                YAHOO.force.com.miscItemPanel.render(document.body);
+               
+            }
+            
+            /**
+             * Callback when the add miscellaneous item button is clicked
+             */
+            function onAddMiscItemClick() {
+                
+                // reset panel field values
+                fldMiscChargeType.value = "Misc";
+                fldMiscDescription.value = "Miscelleneous Line";
+                fldMiscAmount.value = "{!miscBasePrice}";
+                
+                // show the modal panel
+                document.getElementById("miscItemPanel").style.display = "block";
+                YAHOO.force.com.miscItemPanel.show();
+                return false;
+            }       
+            
+            
+            /**
+             * Callback when the ok action button is clicked
+             */
+            function onOkActionClick() {
+                // hide the miscellaneous line item panel
+                YAHOO.force.com.miscItemPanel.hide();
+                // show modal panel
+                YAHOO.force.com.waitPanel.show();
+                // return false to allow the action to proceed
+                return false;
+                
+            }
+            
+            /**
+             * Callback when the ok action is completed
+             */
+            function onOkActionComplete() {
+                // hide the modal panel
+                YAHOO.force.com.waitPanel.hide();
+                
+            }
+            
+            // reprice wait panel
+            
+            /**
+             * Builds the reprice wait panel.
+             */
+            YAHOO.force.com.buildRepriceWaitPanel = function() {
+                document.body.className = document.body.className + " yui-skin-sam";
+                YAHOO.force.com.repriceWaitPanel = new YAHOO.widget.Panel(
+                    "repriceWaitPanel",  // The id of our dialog container
+                    { 
+                            width           :   "300px", // You can play with this until it's right
+                            visible         :   false,   // Should be invisible when rendered
+                            draggable       :   false,   // Make the dialog draggable
+                            close           :   false,   // Don't include a close title button
+                            modal           :   true,    // Make it modal
+                            fixedCenter     :   true,    // Keep centered if window is scrolled
+                            zindex          :   40,      // Make sure it's on top of everything
+                            constraintoviewport: true,
+                            
+                            // This line adds the appear/disapper fade effect
+                            effect          :   {effect:YAHOO.widget.ContainerEffect.FADE,duration:0.25}
+                                        
+                    }
+                );
+                
+                // header
+                YAHOO.force.com.repriceWaitPanel.setHeader("{!$Label.apttus_config2__repricing}");
+                // set image
+                YAHOO.force.com.repriceWaitPanel.setBody('<center><img src="{!URLFOR($Resource.Apttus_Config2__Image_LoadingPage)}" /></center>');
+                // Render the dialog to the document.body level of the DOM
+                YAHOO.force.com.repriceWaitPanel.render(document.body);
+                
+            }
+            
+            /**
+             * Callback when the reprice action button is clicked
+             */
+            function onRepriceAllClick() {
+                // show the modal panel
+                YAHOO.force.com.repriceWaitPanel.show();
+                // return false to allow the action to proceed
+                return false;
+            }
+            
+            /**
+             * Reprices all line items in the current configuration
+             */
+            function doRepriceAll() {
+                            
+                try {
+                    invokeDoRepriceAll();
+                    
+                } catch(ex) {
+                    // hide modal panel
+                    YAHOO.force.com.repriceWaitPanel.hide();
+                    // display the error
+                    cp_erroralert(cp_cERROR_UNKNOWN, ex);
+                    
+                } 
+                
+            }
+            
+            /**
+             * Builds the product detail panel
+             */
+            YAHOO.force.com.buildProductDetailPanel = function() {
+                //document.body.className = document.body.className + " yui-skin-sam";
+                
+                YAHOO.force.com.productDetailPanel = new YAHOO.widget.Panel(
+                    "productDetailPanel",  // The id of our dialog container
+                    { 
+                            width           :   "600px", // You can play with this until it's right
+                            fixedcenter     :   "contained",
+                            visible         :   false,   // Should be invisible when rendered
+                            draggable       :   true,    // Make the dialog draggable
+                            modal           :   true,    // Make it modal
+                            close           :   true,
+                            zindex          :   40,      // Make sure it's on top of everything
+                                                        
+                            // This line adds the appear/disapper fade effect
+                            effect          :   {effect:YAHOO.widget.ContainerEffect.FADE,duration:0.25} 
+                    }
+                 );
+                
+                // Render the dialog to the document.body level of the DOM
+                YAHOO.force.com.productDetailPanel.render();
+                
+            }       
+            
+            /**
+             * Get mouseover product information
+             */
+            function getProductDetail(productId) {
+                
+                // retrieve product info
+                invokeDoGetCtxProductDetail(productId);
+                
+            }           
+        
+            /**
+             * Callback when mouseover product information icon
+             */
+            function showProductDetailPanel() {
+                
+                // show the modal panel
+                document.getElementById("productDetailPanel").style.display = "block";              
+                YAHOO.force.com.productDetailPanel.show();
+                
+            }   
+                    
+            // Function called when the DOM is ready to create the dialog,
+            // render the dialog into the document body, add our dialog skin
+            // css to the body tag, and wire up the buttons on our dialog   
+            YAHOO.force.com.onDOMReady = function() {
+                // build the confirmation panel
+                YAHOO.force.com.buildConfirmationPanel();
+                // build the misc item panel
+                YAHOO.force.com.buildMiscItemPanel();
+                // build the wait panel
+                YAHOO.force.com.buildWaitPanel();
+                // build the reprice wait panel
+                YAHOO.force.com.buildRepriceWaitPanel();
+                // build the product detail panel
+                YAHOO.force.com.buildProductDetailPanel();
+                
+            }
+            
+            // build the tree as soon as the DOM is in a usable state
+            YAHOO.util.Event.onDOMReady(YAHOO.force.com.onDOMReady);    
+            
+            //hide message and call doHideMessage function to update the appliedActionInfo record HideMessage field
+            function aptHideMessage(ele, actionInfoId){
+                if(ele.parentNode != undefined){
+                    ele.parentNode.style.visibility = "hidden";
+                }
+                invokeDoHideMessage(actionInfoId);
+            }   
+            
+        </script>
+
+        
+        <table style="width: 100%; background-color: #F7F7F7;" width="100%">
+            <tr>
+                <td>
+                <table width="100%">
+                    <tr style="background-color: #FFFFFF;">
+                        <td><apex:outputPanel style="text-align: left;"
+                            layout="block">
+                            <apex:panelGrid columns="1">
+                                <apex:panelGroup >
+                                    <apex:outputText escape="false" 
+                                                    value="&nbsp;{!baseController.fromBizType}:"
+                                                     style="text-transform:uppercase;font-weight:bold;color:#5487B9" />
+                                    &nbsp;
+                                    <!--<apex:outputField value="{!baseController.ConfigSO[baseController.BOLookupFieldName]}" 
+                                                      rendered="{!baseController.ShowBOLookupField}" /> -->
+                                                      
+                                    <apex:outputText escape="false"
+                                                     value="&nbsp;{!baseController.fromBizTitle}&nbsp;&nbsp;"
+                                                     style="font-weight:bold;color:#5487B9;" 
+                                                     rendered="{!baseController.ShowBOTitle}" />
+                                </apex:panelGroup>
+                            </apex:panelGrid>
+                        </apex:outputPanel></td>
+                        <td><apex:outputPanel style="text-align: right;" layout="block">
+                            <apex:image url="{!$Resource.Apttus_Config2__Apttus_Logo}" title="" alt="" />
+                        </apex:outputPanel></td>
+                    </tr>
+                </table>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                <table width="100%">
+                    <tr>
+                        <td><apex:outputPanel id="idTopNavStage"
+                            style="text-align: left;" layout="block">
+
+                            <apex:panelGrid columns="1" style="line-height:80%">
+
+                                <apex:panelGroup >
+
+                                    <apex:outputText escape="false"
+                                        value="{!$Label.apttus_config2__step}"
+                                        style="font-weight:bold;font-size:90%" />
+
+                                            &nbsp;&nbsp;
+                                            <apex:outputText escape="false"
+                                        value="&nbsp;&nbsp;{!$Label.Apttus_Config2__StageSelect}&nbsp;&nbsp;"
+                                        styleClass="aptsConfigStage" />
+                
+                                            &nbsp;&nbsp;
+                                            <apex:image url="{!$Resource.Apttus_Config2__Chevron}"
+                                        title="" alt="" />
+                                            &nbsp;&nbsp;
+                                            
+                
+                                            <apex:outputText escape="false"
+                                        value="&nbsp;&nbsp;{!$Label.Apttus_Config2__StageConfigure}&nbsp;&nbsp;"
+                                        styleClass="aptsConfigStage" />
+                
+                                            &nbsp;&nbsp;
+                                            <apex:image url="{!$Resource.Apttus_Config2__Chevron}"
+                                        title="" alt="" />
+                                            &nbsp;&nbsp;
+                
+                                            <apex:outputText escape="false"
+                                        value="&nbsp;&nbsp;{!$Label.Apttus_Config2__StagePrice}&nbsp;&nbsp;"
+                                        styleClass="aptsCurrentConfigStage" rendered="{!baseController.showView}" />
+                                    <apex:outputText escape="false"
+                                        value="&nbsp;&nbsp;{!$Label.Apttus_Config2__StagePrice}&nbsp;&nbsp;"
+                                        styleClass="aptsConfigStage" rendered="{!baseController.showfinalize}" />
+                                                                
+                                            &nbsp;&nbsp;
+                                            <apex:image url="{!$Resource.Apttus_Config2__Chevron}"
+                                        title="" alt="" />
+                                            &nbsp;&nbsp;
+
+                                            <apex:outputText escape="false"
+                                        value="&nbsp;&nbsp;{!$Label.Apttus_Config2__StageFinalize}&nbsp;&nbsp;"
+                                        styleClass="aptsConfigStage" rendered="{!baseController.showView}" />
+                                    <apex:outputText escape="false"
+                                        value="&nbsp;&nbsp;{!$Label.Apttus_Config2__StageFinalize}&nbsp;&nbsp;"
+                                        styleClass="aptsCurrentConfigStage" rendered="{!baseController.showfinalize}" />
+
+                                    <b><apex:actionStatus id="idStatusSelect"
+                                        startText="{!$Label.apttus_config2__statusmessageupdatingpage}..." /></b>
+                                </apex:panelGroup>
+                            </apex:panelGrid>
+
+                        </apex:outputPanel></td>
+
+                        <td><apex:outputPanel id="idTopNavActions"
+                            style="text-align: right;" layout="block">
+                            <apex:commandButton value="{!$Label.apttus_config2__abandon}"
+                                action="{!baseController.doAbandon}" immediate="true"
+                                style="background-color:#657383;background-image:none;color:white;" />
+                                    &nbsp;
+                                </apex:outputPanel></td>
+                    </tr>
+                </table>
+                </td>
+            </tr>
+        </table>
+
+        <apex:pageBlock id="idViewBlock">
+
+            <apex:outputPanel id="idErrorMsg">
+                <apex:pageMessages />
+                <apex:outputText value="Goal Seek Recursion happening. Goal seek is reset. Please goal seek with appropriate value"
+                            style="font-weight:bold;color:red" rendered="{!isGoalSeekRecursive}" />
+                            
+                <apex:outputText value="Your support credits exceed the amount of your Total support amount.  You must adjust your quote to increase your Total Support amount."
+                            style="font-weight:bold;color:red" rendered="{!isSupportCreditHigher}" />
+                            
+                <apex:outputText value="You cannot apply Goal Seek at multiple levels. To continue, please apply Goal Seek only only at one level."
+                            style="font-weight:bold;color:red" rendered="{!hasMultipleGoalSeek}" />
+                
+                <apex:outputText value="{!MSMMigAllErrorMessage}" rendered="{!MSMMigAllErrorMessage != null}" style="color:red"/>
+                <!-- <apex:outputPanel id="idMSMMigAllowanceMessage" rendered="{!inMigration && isMSMGGB2B}">            
+                    <apex:outputText value="Max Line Level Discount: " rendered="{!inMigration}"/>
+                    <apex:outputText value="{0,number,##0.0000000'%'}" rendered="{!inMigration}">
+                        <apex:param value="{!goalSeekLimit.MaxLineLevelDiscount}"/>
+                    </apex:outputText>
+                    &nbsp;&nbsp; | &nbsp;&nbsp;
+                    <apex:outputText value="Min Goal Seek Amount:  " rendered="{!inMigration}"/>
+                    <apex:outputText value="{0,number,#0.00}" rendered="{!inMigration}">
+                        <apex:param value="{!goalSeekLimit.MinGoalSeekAmount}"/>
+                    </apex:outputText>
+                    &nbsp;&nbsp; | &nbsp;&nbsp;
+                    <apex:outputText value="Max Goal Seek Discount: " rendered="{!inMigration}"/>
+                    <apex:outputText value="{0,number,##0.0000000'%'}" rendered="{!inMigration}">
+                        <apex:param value="{!goalSeekLimit.MaxGoalSeekDiscount}"/>
+                    </apex:outputText>
+                </apex:outputPanel> -->
+            </apex:outputPanel>
+            <apex:outputPanel id="idConstraintRuleResult">
+            <Apttus_Config2:RuleMessageDisplay id="idRuleMessageComponent"
+                        configId="{!Id}" isInCart="true"/> 
+            </apex:outputPanel>
+
+            <apex:pageBlockButtons location="top" id="idPageButtons">
+                   
+                <!--<apex:commandButton value="{!$Label.ReviewPrerequisites}" 
+                            action="{!doReviewPrerequisites}" 
+                            disabled="{!Apttus_Config2__ProductConfiguration__c.Apttus_Config2__IsPricePending__c}"
+                            rendered="{!AND(hasPrereq, baseController.showView)}"/>-->
+                <!--<apex:commandButton value="{!$Label.ReconfigureMigration}" 
+                            onClick="return confirm('{!$Label.ReconfigureMigrationMessage}')" 
+                            action="{!doBackToMigration}"
+                            rendered="{!inMigration}"/>-->
+                <!--<apex:commandButton value="{!$Label.Ok}" onClick="onAddMiscItemClick();" rendered="{!1==0}"/>
+                
+                <apex:commandButton value="{!$Label.ConfigureAll}" action="{!doConfigureAll}"
+                    rendered="{!baseController.showView}" />
+                
+                <apex:commandButton value="{!$Label.Apttus_Config2__AddMoreProducts}"
+                    action="{!baseController.doAddProducts}" onclick="onActionClick();"
+                    oncomplete="onActionComplete();" />
+
+                <apex:commandButton value="{!$Label.Apttus_Config2__BackToPricing}"
+                    action="{!baseController.doPricing}" rendered="{!baseController.showFinalize}"
+                    onclick="onActionClick();" oncomplete="onActionComplete();"
+                    rerender="idTopNavStage, idTopNavActions, idViewBlock" />
+                    
+                <apex:commandButton value="{!$Label.Apttus_Config2__Finalize}"
+                    action="{!doFinalize}" onclick="onActionClick();"
+                    oncomplete="onActionComplete();" reRender="idErrorMsg"
+                    rendered="{!baseController.showFinalize}" />--->
+
+                <!-- <apex:commandButton value="{!$Label.apttus_config2__applyadjustments}"
+                    rendered="{!baseController.showView}" action="{!applyAllAdjustments}"
+                    disabled="{!Apttus_Config2__ProductConfiguration__c.Apttus_Config2__IsPricePending__c}"
+                    onclick="onActionClick();" oncomplete="onActionComplete();"
+                    rerender="idViewBlock" />-->
+                    
+                <apex:commandButton value="{!$Label.apttus_config2__applyadjustments}"
+                    rendered="{!baseController.showView}" action="{!applyAllAdjustments}"
+                    disabled="{!Apttus_Config2__ProductConfiguration__c.Apttus_Config2__IsPricePending__c}"
+                    onclick="onActionClick();" oncomplete="onApplyAllAdjustmentActionComplete();"
+                    />
+                
+                <!--<apex:commandButton value="{!$Label.Apttus_Config2__ReviewAndFinalize}"
+                    onClick="onActionClick();"
+                    rendered="{!baseController.showView}" action="{!applyAllAdjustments}"
+                    oncomplete="onApplyAllAdjustmentActionFinalizeComplete();"
+                    rerender="idErrorMsg, hasErrorInApplyAllAdjustments, migrationVars, dealACVPanel" />
+
+                <!-- <apex:commandButton value="{!$Label.Apttus_Config2__ReviewAndFinalize}"
+                    rendered="{!baseController.showView}" action="{!doSaveAndNext}"
+                    status="idStatusSelect"
+                    rerender="idErrorMsg, idTopNavStage, idTopNavActions, idViewBlock" /> -->
+
+            </apex:pageBlockButtons>
+
+            <table style="width: 100%">
+                <tr>
+                    <td style="width: 33%"></td>
+                    <td style="width: 33%"><apex:outputPanel rendered="{!baseController.showFinalize}">
+                        <apex:outputText value="{!$Label.apttus_config2__checkitemsbeforefinalize}"
+                            style="font-weight:bold;color:#5487B9;text-transform:uppercase" />
+                    </apex:outputPanel></td>
+                    <td style="width: 33%"></td>
+                </tr>
+            </table>
+
+            <table style="width: 100%" >
+                <tr>
+                    <td style="width: 100%">
+                        <apex:outputPanel id="migrationVars" layout="block" style="text-align: center;" 
+                                rendered="{!inMigration}">
+                            <!--<apex:outputText value="{!$Label.SupportCredit}: "/>
+                            <apex:outputText value="{0,number,currency}">
+                                <apex:param value="{!supportCredit}" />
+                            </apex:outputText> --> 
+                              <!-- DE2066 <apex:outputField value="{!proposalSO.BMC_Support_Credit__c}"
+                                    rendered="{!baseController.IsMultiCurrency}" />
+                                <apex:outputText value="{0,number,currency}"
+                                    rendered="{!NOT(baseController.IsMultiCurrency)}">
+                                    <apex:param value="{!proposalSO.BMC_Support_Credit__c}" />
+                            </apex:outputText>
+                            &nbsp;&nbsp; | &nbsp;&nbsp;
+                            <apex:outputText value="New Support Credit: "/> -->
+                            <!--<apex:outputField value="{!Apttus_Config2__ProductConfiguration__c.BMC_Support_Credit__c}"
+                                    rendered="{!baseController.IsMultiCurrency}" />
+                                <apex:outputText value="{0,number,currency}"
+                                    rendered="{!NOT(baseController.IsMultiCurrency)}">
+                                    <apex:param value="{!Apttus_Config2__ProductConfiguration__c.BMC_Support_Credit__c}" />
+                            </apex:outputText>
+                            &nbsp;&nbsp; | &nbsp;&nbsp;
+                            <apex:outputText value="{!$Label.PreviousRunRate}: "/>
+                            <!-- <apex:outputText value="{0,number,currency}">
+                                <apex:param value="{!oldRunRate}" />
+                            </apex:outputText>  
+                            <apex:outputField value="{!proposalSO.BMC_Migrated_Asset_Run_Rate__c}"
+                                    rendered="{!baseController.IsMultiCurrency}" />
+                                <apex:outputText value="{0,number,currency}"
+                                    rendered="{!NOT(baseController.IsMultiCurrency)}">
+                                    <apex:param value="{!proposalSO.BMC_Migrated_Asset_Run_Rate__c}" />
+                            </apex:outputText>
+                            &nbsp;&nbsp; | &nbsp;&nbsp;
+                            <apex:outputText value="{!$Label.NewRunRate}: "/>
+                            <apex:outputField value="{!NewRunRateSO.BMC_Transient_Currency__c}"
+                                    rendered="{!baseController.IsMultiCurrency}" />
+                                <apex:outputText value="{0,number,currency}"
+                                    rendered="{!NOT(baseController.IsMultiCurrency)}">
+                                    <apex:param value="{!NewRunRateSO.BMC_Transient_Currency__c}" />
+                            </apex:outputText>
+                            &nbsp;&nbsp; | &nbsp;&nbsp;
+                            <apex:outputText value="{!$Label.MigrationThreshold}: "/>
+                            <apex:outputText value="{0,number,##0.00'%'}" rendered = "{!IF(OR(migrationThreshold >= 110, isModelSaaS), true, false)}">
+                                <apex:param value="{!migrationThreshold}" />
+                            </apex:outputText>
+                            <apex:outputText value="{0,number,##0.00'%'}" rendered="{!IF(AND(migrationThreshold < 110, NOT(isModelSaaS)), true, false)}" style="color:red; font-weight: bold">
+                                <apex:param value="{!migrationThreshold}" />
+                            </apex:outputText>-->
+                        </apex:outputPanel>
+                    </td>
+                </tr>
+                <tr>
+                <td style="width: 100%">
+                        <!--<apex:outputPanel id="dealACVPanel" layout="block" style="text-align: center;" 
+                                rendered="{!isModelSaaS}">
+                            <apex:outputLabel value="{!$ObjectType.Apttus_Config2__ProductConfiguration__c.fields.BMC_Total_Deal_ACV__c.label} : "/>    
+                            <apex:outputField value="{!Apttus_Config2__ProductConfiguration__c.BMC_Total_Deal_ACV__c}"
+                                    rendered="{!baseController.IsMultiCurrency}" />
+                            <apex:outputText value="{0,number,currency}"
+                                    rendered="{!NOT(baseController.IsMultiCurrency)}">
+                                <apex:param value="{!Apttus_Config2__ProductConfiguration__c.BMC_Total_Deal_ACV__c}" />
+                            </apex:outputText>
+                        </apex:outputPanel>-->
+                    </td>
+                </tr>
+            </table>
+            
+            <!--  LINE ITEMS -->
+
+            <apex:tabPanel id="idTabPanel" switchType="ajax"
+                value="{!baseController.curTabSelection}" inactiveTabClass="inactiveTab"
+                tabClass="activeTab" contentClass="tabContentClass">
+
+                <apex:tab id="idDetailTab" label="{!$Label.apttus_config2__detail}"
+                    name="viewDetailTab" ontabenter="onActionClick();"
+                    oncomplete="onActionComplete();">
+
+                    <table style="width: 100%">
+                        <tr>
+                            <td style="width: 90%"><apex:outputPanel layout="block"
+                                style="text-align: center;">
+                                <apex:commandLink action="{!baseController.doToggleDuration}"
+                                    value="{!$Label.apttus_config2__showduration}"
+                                    style="color:blue;"
+                                    rendered="{!baseController.isActionShowDurationEnabled && NOT(baseController.showDuration)}"
+                                    reRender="idTabPanel" onclick="onActionClick();"
+                                    oncomplete="onActionComplete();" />
+                                    &nbsp;
+                                    <apex:commandLink action="{!baseController.doToggleDuration}"
+                                    value="{!$Label.apttus_config2__hideduration}"
+                                    style="color:blue;"
+                                    rendered="{!baseController.isActionShowDurationEnabled && baseController.showDuration}"
+                                    reRender="idTabPanel" onclick="onActionClick();"
+                                    oncomplete="onActionComplete();" />
+                            </apex:outputPanel></td>
+                            <td style="width: 10%"><apex:outputPanel layout="block"
+                                style="text-align: right;">
+                                <!--<apex:outputlink value="{!$Label.Pricing_Models_Portal_URL}" target="_blank" style="color:blue;">
+                                    <div style="color:blue;">{!$Label.Pricing_Models_Portal}</div>
+                                </apex:outputlink>-->
+                            </apex:outputPanel></td>
+                        </tr>
+                    </table>
+
+                    <apex:outputPanel >
+                    
+                        <apex:pageBlockTable width="100%" value="{!baseController.detailLineItemlist}"
+                            var="detailItem" rules="rows" rowClasses="oddRow, evenRow"
+                            headerClass="aptsColHead">
+
+                            <apex:column style="text-align:left" rendered="{!baseController.showView}">
+                                <apex:facet name="header">{!$Label.apttus_config2__actions}</apex:facet>
+                                <apex:commandLink value="{!$Label.apttus_config2__remove}"
+                                    onclick="YAHOO.force.com.showRemoveConfirmation('{!detailItem.lineItemSO.Apttus_Config2__LineNumber__c}');"
+                                    reRender="idErrorMsg" immediate="true" style="color:blue;"
+                                    rendered="{!(detailItem.lineItemSO.Apttus_Config2__LineType__c != baseController.LineTypeOption) &&  
+                                                               (detailItem.lineItemSO.Apttus_Config2__IsPrimaryLine__c) && 
+                                                               (detailItem.lineItemSO.Apttus_Config2__AllowRemoval__c) &&
+                                                               (detailItem.lineItemSO.Apttus_Config2__LineType__c != 'Misc')}">
+                                </apex:commandLink>
+                            </apex:column>
+                            
+                            <!-- Added below column for CO3945 -->
+                            <!--<apex:column style="width: 5%; max-width: 10%; text-align: center;">
+                                <apex:facet name="header"><apex:outputText >{!$Label.Prod_OBS}<br/>{!$Label.Before_SUPP}<br/>{!$Label.End_Date}</apex:outputText></apex:facet>
+                                <apex:image url="{!$Resource.Apttus_Config2__Image_RuleError}"
+                                        rendered="{!detailItem.lineItemSO.Prod_OBS_Before_SUPP_End_Date__c='TRUE'}" />
+                            </apex:column>-->
+                            
+                            <apex:column style="width: 10%; max-width: 15%;"
+                                rendered="{!baseController.isColumnTotalingGroupEnabled && baseController.isCategorySummary}">
+                                <!-- <apex:facet name="header">{!$Label.Apttus_Config2__Group}</apex:facet> -->
+                                <apex:facet name="header">{!$ObjectType.Apttus_Config2__LineItem__c.Fields.Apttus_Config2__AdHocGroupId__c.Label}</apex:facet>
+                                <apex:outputField value="{!detailItem.lineItemSO.Apttus_Config2__AdHocGroupId__c}"
+                                    rendered="{!(detailItem.lineItemSO.Apttus_Config2__LineType__c == baseController.LineTypeProduct)}" />
+                            </apex:column>
+
+                            <apex:column style="width: 10%; max-width: 15%;"
+                                rendered="{!baseController.isColumnTotalingGroupEnabled && baseController.isAdHocSummary}">
+                                <apex:facet name="header">{!$ObjectType.Apttus_Config2__LineItem__c.Fields.Apttus_Config2__AdHocGroupId__c.Label}</apex:facet>
+                                <apex:selectList value="{!detailItem.lineItemSO.Apttus_Config2__AdHocGroupId__c}"
+                                    rendered="{!baseController.showView}" size="1">
+                                    <apex:selectOptions value="{!baseController.totalingGroupItems}" />
+                                </apex:selectList>
+                                <apex:outputField value="{!detailItem.lineItemSO.Apttus_Config2__AdHocGroupId__c}"
+                                    rendered="{!baseController.showFinalize}" />
+                            </apex:column>
+
+                            <apex:column style="width: 20%; max-width: 30%;">
+                                <apex:facet name="header">{!$ObjectType.Apttus_Config2__LineItem__c.Fields.Apttus_Config2__ProductId__c.Label}</apex:facet>
+
+                                <apex:commandLink rerender="dummy">
+                                    <apex:image url="{!$Resource.Apttus_Config2__Image_Info}"
+                                        onclick="getProductDetail('{!detailItem.lineItemSO.Apttus_Config2__ProductId__c}');"
+                                        rendered="{!(detailItem.lineItemSO.Apttus_Config2__LineType__c == baseController.LineTypeProduct) && 
+                                                            (detailItem.lineItemSO.Apttus_Config2__IsPrimaryLine__c)}" />
+                                </apex:commandLink>
+                                &nbsp;
+                                <apex:outputField value="{!detailItem.lineItemSO.Apttus_Config2__ProductId__c}"
+                                    rendered="{!(detailItem.lineItemSO.Apttus_Config2__LineType__c == baseController.LineTypeProduct) && 
+                                                              (detailItem.lineItemSO.Apttus_Config2__IsPrimaryLine__c)}" />
+                            </apex:column>
+
+                            <apex:column >
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Apttus_Config2__Charge}<br></br>{!$Label.Apttus_Config2__Type}</apex:outputText>
+                                </apex:facet>
+                                <apex:outputField value="{!detailItem.lineItemSO.Apttus_Config2__ChargeType__c}" />
+                            </apex:column>
+
+                            <apex:column style="text-align:right">
+                                <apex:facet name="header">
+                                    <!--<apex:outputText >{!$Label.UnitPrice}</apex:outputText>-->
+                                </apex:facet>
+                                <apex:outputField value="{!detailItem.lineItemSO.Apttus_Config2__BasePrice__c}"
+                                    rendered="{!baseController.IsMultiCurrency}" />
+                                <apex:outputText value="{0,number,currency}"
+                                    rendered="{!NOT(baseController.IsMultiCurrency)}">
+                                    <apex:param value="{!detailItem.lineItemSO.Apttus_Config2__BasePrice__c}" />
+                                </apex:outputText>
+                            </apex:column>
+
+                            <!--<apex:column style="text-align:right"
+                                rendered="{!AND(baseController.isColumnQuantityEnabled, inMigration)}">
+                                <apex:facet name="header">Migrated<br></br>Quantity</apex:facet>
+                                <apex:outputText value="{0,number}">
+                                     <apex:param value="{!detailItem.lineItemSO.Migrated_Quantity__c}" />
+                                </apex:outputText>
+                            </apex:column>-->
+
+                            <apex:column style="text-align:right"
+                                rendered="{!baseController.isColumnQuantityEnabled}">
+                                <apex:facet name="header">{!$ObjectType.Apttus_Config2__LineItem__c.Fields.Apttus_Config2__Quantity__c.Label}</apex:facet>
+                                <apex:outputText value="{0,number}">
+                                    <apex:param value="{!detailItem.lineItemSO.Apttus_Config2__Quantity__c}" />
+                                </apex:outputText>
+                            </apex:column>
+
+                           <!--<apex:column >
+                                <apex:facet name="header">{!$Label.Apttus_Config2__UOM}</apex:facet>
+                                <apex:outputField value="{!detailItem.lineItemSO.BMC_UOM__c}" />
+                            </apex:column>
+                            <apex:column >
+                                <apex:facet name="header">{!$Label.Apttus_Config2__Type}</apex:facet>
+                                <apex:outputField value="{!detailItem.lineItemSO.BMC_Line_Status__c}" />
+                            </apex:column>-->
+
+                            <apex:column style="text-align:right" rendered="{!baseController.showDuration}">
+                                <apex:facet name="header">{!$ObjectType.Apttus_Config2__LineItem__c.Fields.Apttus_Config2__StartDate__c.Label}</apex:facet>
+                                <apex:outputField value="{!detailItem.lineItemSO.Apttus_Config2__StartDate__c}"  />
+                            </apex:column>
+
+                            <apex:column style="text-align:right" rendered="{!baseController.showDuration}">
+                                <apex:facet name="header">{!$ObjectType.Apttus_Config2__LineItem__c.Fields.Apttus_Config2__EndDate__c.Label}</apex:facet>
+                                <apex:outputField value="{!detailItem.lineItemSO.Apttus_Config2__EndDate__c}"  />
+                            </apex:column>
+
+                            <apex:column style="text-align:right">
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Apttus_Config2__List}<br></br>{!$Label.Apttus_Config2__Price}</apex:outputText>
+                                </apex:facet>
+                                <apex:outputField value="{!detailItem.lineItemSO.Apttus_Config2__ExtendedPrice__c}"
+                                    rendered="{!baseController.IsMultiCurrency}" />
+                                <apex:outputText value="{0,number,currency}"
+                                    rendered="{!NOT(baseController.IsMultiCurrency)}">
+                                    <apex:param value="{!detailItem.lineItemSO.Apttus_Config2__ExtendedPrice__c}" />
+                                </apex:outputText>
+                            </apex:column>
+
+                            <apex:column style="text-align:right">
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Apttus_Config2__Group}<br></br>{!$Label.Apttus_Config2__AdjustmentPercent}</apex:outputText>
+                                </apex:facet>
+                                <apex:Outputtext value="{0,number}">
+                                    <apex:param value="{!detailItem.lineItemSO.Apttus_Config2__GroupAdjustmentPercent__c}" />
+                                </apex:Outputtext>
+                            </apex:column>
+
+                            <apex:column style="text-align:right">
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Apttus_Config2__Adjusted}<br></br>{!$Label.Apttus_Config2__Price}</apex:outputText>
+                                </apex:facet>
+                                <apex:outputField value="{!detailItem.lineItemSO.Apttus_Config2__AdjustedPrice__c}"
+                                    rendered="{!baseController.IsMultiCurrency}" />
+                                <apex:outputText value="{0,number,currency}"
+                                    rendered="{!NOT(baseController.IsMultiCurrency)}">
+                                    <apex:param value="{!detailItem.lineItemSO.Apttus_Config2__AdjustedPrice__c}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <!-- DE2109
+                            <apex:column style="text-align:right">
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Apttus_Config2__Net}<br></br>{!$Label.Apttus_Config2__AdjustmentPercent}</apex:outputText>
+                                </apex:facet>
+                                <apex:outputText value="{0,number}">
+                                    <apex:param value="{!detailItem.lineItemSO.Apttus_Config2__NetAdjustmentPercent__c}" />
+                                </apex:outputText>
+                            </apex:column>
+                            -->
+                            <apex:column style="text-align:right">
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Apttus_Config2__Net}<br></br>{!$Label.Apttus_Config2__Price}</apex:outputText>
+                                </apex:facet>
+                                <apex:outputField value="{!detailItem.lineItemSO.Apttus_Config2__NetPrice__c}"
+                                    rendered="{!baseController.IsMultiCurrency}" />
+                                <apex:outputText value="{0,number,currency}"
+                                    style="{!IF(baseController.showFinalize, 'font-weight:bold;', '')}"
+                                    rendered="{!NOT(baseController.IsMultiCurrency)}">
+                                    <apex:param value="{!detailItem.lineItemSO.Apttus_Config2__NetPrice__c}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <!-- CO3941 & CO3700
+                            <apex:column style="text-align:right">
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Support_Credit}</apex:outputText>
+                                </apex:facet>
+                                <apex:outputField value="{!detailItem.lineItemSO.BMC_Support_Credit__c}" />
+                            </apex:column>
+                            -->
+                        </apex:pageBlockTable>
+                    </apex:outputPanel>
+                </apex:tab>
+
+                <apex:tab id="idAdjTab"
+                    label="{!$Label.apttus_config2__adjustments}"
+                    name="viewAdjustmentsTab" rendered="{!baseController.IsMultiAdjustmentEnabled}"
+                    ontabenter="onActionClick();" oncomplete="onActionComplete();">
+
+                    <apex:outputPanel >
+                                                        
+                        <!--<apex:pageBlockTable width="100%" value="{!LineItemAdjustments}"
+                            var="adjInfo" rules="rows" rowClasses="oddRow, evenRow"
+                            headerClass="aptsColHead">
+
+                            <apex:column style="width: 150px; max-width: 30%;">
+                                <apex:facet name="header">&nbsp;&nbsp;&nbsp;{!$ObjectType.Apttus_Config2__LineItem__c.Fields.Apttus_Config2__ProductId__c.Label}&nbsp;&nbsp;&nbsp;</apex:facet>
+
+                                <apex:commandLink rerender="dummy">
+                                    <apex:image url="{!$Resource.Apttus_Config2__Image_Info}"
+                                        onclick="getProductDetail('{!adjInfo.lineItemSO.Apttus_Config2__ProductId__c}');"
+                                        rendered="{!(adjInfo.lineItemSO.Apttus_Config2__LineType__c == baseController.LineTypeProduct) &&  
+                                                            (adjInfo.lineItemSO.Apttus_Config2__IsPrimaryLine__c)}" />
+                                </apex:commandLink>
+                                &nbsp;
+                                <apex:outputField value="{!adjInfo.lineItemSO.Apttus_Config2__ProductId__c}"
+                                    rendered="{!(adjInfo.lineItemSO.Apttus_Config2__LineType__c == baseController.LineTypeProduct) &&  
+                                                              (adjInfo.lineItemSO.Apttus_Config2__IsPrimaryLine__c)}" />
+                            </apex:column>
+
+                            <apex:column >
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Apttus_Config2__Charge}<br></br>{!$Label.Apttus_Config2__Type}</apex:outputText>
+                                </apex:facet>
+                                <apex:outputField value="{!adjInfo.lineItemSO.Apttus_Config2__ChargeType__c}" />
+                            </apex:column>
+
+                            
+                            <apex:column style="text-align:right">
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.UnitPrice}</apex:outputText>
+                                </apex:facet>
+                                <apex:outputField value="{!adjInfo.lineItemSO.Apttus_Config2__BasePrice__c}"
+                                    rendered="{!baseController.IsMultiCurrency}" />
+                                <apex:outputText value="{0,number,currency}"
+                                    rendered="{!NOT(baseController.IsMultiCurrency)}">
+                                    <apex:param value="{!adjInfo.lineItemSO.Apttus_Config2__BasePrice__c}" />
+                                </apex:outputText>
+
+                            </apex:column>
+
+                            <apex:column style="text-align: center;">
+                                <apex:facet name="header">{!$ObjectType.Apttus_Config2__LineItem__c.Fields.Apttus_Config2__Quantity__c.Label}</apex:facet>
+                                <apex:outputText value="{0,number}">
+                                    <apex:param value="{!adjInfo.lineItemSO.Apttus_Config2__Quantity__c}" />
+
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column >
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Apttus_Config2__List}<br></br>{!$Label.Apttus_Config2__Price}</apex:outputText>                                
+                                </apex:facet>
+                                <apex:outputField value="{!adjInfo.lineItemSO.Apttus_Config2__ExtendedPrice__c}" />
+                            </apex:column>
+                            <apex:column >
+                                <apex:facet name="header">{!$Label.Apttus_Config2__Type}</apex:facet>
+                                <apex:outputField value="{!adjInfo.lineItemSO.BMC_Line_Status__c}" />
+                            </apex:column>
+
+                            <apex:column style="text-align: right;">
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Apttus_Config2__Net}<br></br>{!$Label.Apttus_Config2__Price}</apex:outputText>
+                                </apex:facet>
+                                <apex:outputField value="{!adjInfo.lineItemSO.Apttus_Config2__NetPrice__c}"
+                                    rendered="{!baseController.IsMultiCurrency}" />
+                                <apex:outputText value="{0,number,currency}"
+                                    rendered="{!NOT(baseController.IsMultiCurrency)}">
+                                    <apex:param value="{!adjInfo.lineItemSO.Apttus_Config2__NetPrice__c}" />
+                                </apex:outputText>
+                            </apex:column>
+
+                            <apex:column headerValue="{!$Label.apttus_config2__adjustments}">
+
+                                <apex:pageBlockTable value="{!adjInfo.Adjustments}"
+                                    var="adjItemSO" columns="7" headerClass="aptsColHead" 
+                                    rendered="{!baseController.showView}">
+
+                                    <apex:column width="5%">
+                                        <apex:commandLink action="{!baseController.doAddAdjustmentRow}"
+                                            reRender="idTabPanel"
+                                            rendered="{!AND(OR((AND(adjInfo.lineItemSO.Apttus_Config2__ChargeType__c == 'License Price'))
+                                                            , (adjInfo.lineItemSO.Apttus_Config2__LineStatus__c == 'Renewed')
+                                                            , (canEditSupportAdjusts)
+                                                            )
+                                                        ,NOT(AND(ProposalSO.BMC_Use_Attachemt_A_Pricing__c,adjInfo.lineItemSO.Apttus_Config2__LineStatus__c != 'New'))
+                                                        , NOT(adjInfo.lineItemSO.Apttus_Config2__ChargeType__c == 'Service Price')
+                                                        , adjInfo.adjustments.size == adjItemSO.Apttus_Config2__LineNumber__c
+                                                        , NOT(AND(isModelGreen, 'Term Quote' == proposalSO.RecordTypeName__c))
+                                                        , (adjInfo.lineItemSO.Apttus_Config2__PriceListItemId__r.Apttus_Config2__AllowManualAdjustment__c))}" >
+                                            <apex:param name="seqNumber" value="{!adjInfo.SeqNumber}" />
+                                            <apex:param name="rowNum"
+                                                value="{!adjItemSO.Apttus_Config2__LineNumber__c}" />
+                                            <apex:image url="{!$Resource.Apttus_Config2__Image_Plus}"
+                                                title="{!$Label.Apttus_Config2__Add}"
+                                                alt="{!$Label.Apttus_Config2__Add}" />
+                                        </apex:commandLink>
+                                        <apex:commandLink action="{!baseController.doDeleteAdjustmentRow}"
+                                            reRender="idTabPanel"
+                                            rendered="{!AND(OR((adjInfo.lineItemSO.Apttus_Config2__ChargeType__c == 'License Price')
+                                                            , (adjInfo.lineItemSO.Apttus_Config2__LineStatus__c == 'Renewed')
+                                                            , (canEditSupportAdjusts))
+                                                        , (adjItemSO.Apttus_Config2__LineNumber__c > 1)
+                                                        , (adjItemSO.Apttus_Config2__Type__c != 'Partner Incentive Discount')
+                                                        , (adjItemSO.Apttus_Config2__Type__c != 'ESP Discount')
+                                                        , (adjItemSO.Apttus_Config2__Type__c != 'Reseller Support Discount')
+                                                        , (adjItemSO.Apttus_Config2__Type__c != 'Migration Allowance'))}">
+                                            <apex:param name="seqNumber" value="{!adjInfo.SeqNumber}" />
+                                            <apex:param name="rowNum"
+                                                value="{!adjItemSO.Apttus_Config2__LineNumber__c}" />
+                                            <apex:image url="{!$Resource.Apttus_Config2__Image_Minus}"
+                                                title="{!$Label.apttus_config2__remove}"
+                                                alt="{!$Label.apttus_config2__remove}" />
+                                        </apex:commandLink>
+                                    </apex:column>
+
+                                    <apex:column >
+                                        <apex:outputField value="{!adjItemSO.Apttus_Config2__LineNumber__c}" />
+                                    </apex:column>
+                                    
+                                    <apex:column > 
+                                        <apex:outputField value="{!adjItemSO.Apttus_Config2__Type__c}"
+                                            rendered="{!OR((AND(adjInfo.lineItemSO.Apttus_Config2__ChargeType__c == 'Support Price',adjInfo.lineItemSO.Apttus_Config2__LineStatus__c != 'Renewed'))
+                                                            , NOT(adjItemSO.Apttus_Config2__IsModifiable__c)
+                                                            , (adjItemSO.Apttus_Config2__AdjustmentAmount__c != null))}" />
+                                           <apex:selectList value="{!adjItemSO.Apttus_Config2__Type__c}" size="1"
+                                                    multiselect="false"
+                                                    rendered="{!AND(adjItemSO.Apttus_Config2__IsModifiable__c
+                                                                , OR(adjInfo.lineItemSO.Apttus_Config2__ChargeType__c != 'Support Price',adjInfo.lineItemSO.Apttus_Config2__LineStatus__c == 'Renewed')
+                                                                , (adjItemSO.Apttus_Config2__AdjustmentAmount__c == null))}">
+                                                   <apex:selectOptions value="{!adjustmentTypeOptions}" />
+                                            </apex:selectList>
+                                            <!--
+                                            <script>
+                                            alert('Select ' + "{!AND(adjItemSO.Apttus_Config2__IsModifiable__c
+                                                                , OR(adjInfo.lineItemSO.Apttus_Config2__ChargeType__c != 'Support Price',adjInfo.lineItemSO.Apttus_Config2__LineStatus__c == 'Renewed')
+                                                                , (adjItemSO.Apttus_Config2__AdjustmentAmount__c == null))}" +  '    Output Field  ' + "{!OR((AND(adjInfo.lineItemSO.Apttus_Config2__ChargeType__c == 'Support Price',adjInfo.lineItemSO.Apttus_Config2__LineStatus__c != 'Renewed'))
+                                                            , NOT(adjItemSO.Apttus_Config2__IsModifiable__c)
+                                                            , (adjItemSO.Apttus_Config2__AdjustmentAmount__c != null))}");
+                                            </script>
+                                            
+                                    </apex:column>
+                                    
+                                    <apex:column >
+                                        <apex:outputField value="{!adjItemSO.Apttus_Config2__AdjustmentAppliesTo__c}" />
+                                    </apex:column>
+                                    
+                                    <apex:column >
+                                        <apex:outputField value="{!adjItemSO.Apttus_Config2__AdjustmentType__c}" rendered="{!adjItemSO.Apttus_Config2__Type__c != 'Migration Allowance'}"/>
+                                        <apex:outputText value="{!$Label.Allowance}" rendered="{!adjItemSO.Apttus_Config2__Type__c == 'Migration Allowance'}"/>
+                                    </apex:column>
+
+                                    <apex:column style="text-align:right">
+                                        <apex:outputText value="{0,number}" rendered="{!adjItemSO.Apttus_Config2__Type__c == 'Migration Allowance'}">
+                                            <apex:param value="{!adjInfo.lineItemSO.BMC_Pro_Rated_Migration_Allowance__c}" />
+                                        </apex:outputText>
+                                        <apex:outputText value="{0,number}" rendered="{!AND(NOT(adjItemSO.Apttus_Config2__IsModifiable__c), adjItemSO.Apttus_Config2__Type__c != 'Migration Allowance')}">
+                                            <apex:param value="{!adjItemSO.Apttus_Config2__AdjustmentAmount__c}" />
+                                        </apex:outputText>
+                                        <apex:inputField value="{!adjItemSO.Apttus_Config2__AdjustmentAmount__c}"
+                                            rendered="{!AND(adjItemSO.Apttus_Config2__IsModifiable__c, adjItemSO.Apttus_Config2__Type__c != 'Migration Allowance')}" />
+                                    </apex:column>
+
+                                    <apex:column width="5%">
+                                         
+                                    </apex:column>
+
+                                </apex:pageBlockTable>
+                                <apex:pageBlockTable value="{!adjInfo.Adjustments}"
+                                    var="adjItemSO" columns="7" headerClass="aptsColHead" 
+                                    rendered="{!NOT(baseController.showView)}">
+
+                                    <apex:column width="5%">
+                                    </apex:column>
+
+                                    <apex:column >
+                                        <apex:outputField value="{!adjItemSO.Apttus_Config2__LineNumber__c}" />
+                                    </apex:column>
+                                    
+                                    <apex:column > 
+                                        <apex:outputField value="{!adjItemSO.Apttus_Config2__Type__c}" />
+                                    </apex:column>
+                                    
+                                    <apex:column >
+                                        <apex:outputField value="{!adjItemSO.Apttus_Config2__AdjustmentAppliesTo__c}" />
+                                    </apex:column>
+                                    
+                                    <apex:column >
+                                        <apex:outputField value="{!adjItemSO.Apttus_Config2__AdjustmentType__c}" rendered="{!adjItemSO.Apttus_Config2__Type__c != 'Migration Allowance'}"/>
+                                        <apex:outputText value="{!$Label.Allowance}" rendered="{!adjItemSO.Apttus_Config2__Type__c == 'Migration Allowance'}"/>
+                                    </apex:column>
+
+                                    <apex:column style="text-align:right">
+                                        <apex:outputText value="{0,number}" rendered="{!adjItemSO.Apttus_Config2__Type__c == 'Migration Allowance'}">
+                                            <apex:param value="{!adjInfo.lineItemSO.BMC_Pro_Rated_Migration_Allowance__c}" />
+                                        </apex:outputText>
+                                        <apex:outputText value="{0,number}" rendered="{!adjItemSO.Apttus_Config2__Type__c != 'Migration Allowance'}">
+                                            <apex:param value="{!adjItemSO.Apttus_Config2__AdjustmentAmount__c}" />
+                                        </apex:outputText>
+                                    </apex:column>
+
+                                    <apex:column width="5%">
+                                         
+                                    </apex:column>
+
+                                </apex:pageBlockTable>
+                            </apex:column>
+
+                        </apex:pageBlockTable>-->
+                    </apex:outputPanel>
+                </apex:tab>
+
+                <apex:tab id="idTotalsTab" label="{!$Label.apttus_config2__totals}"
+                    name="viewTotalsTab" ontabenter="onActionClick();"
+                    oncomplete="onActionComplete();">
+
+                    <apex:outputPanel >
+                        <apex:pageBlockTable width="100%" value="{!baseController.totalsLineItemlist}"
+                            var="totalsItem" rules="rows" rowClasses="oddRow, evenRow"
+                            headerClass="aptsColHead">
+                            <!-- apex:column >
+                                <apex:facet name="header">Line Info</apex:facet>
+                                <apex:outputText >Finalize:{!baseController.showFinalize}
+                                        / ShowView: {!(baseController.showView)}
+                                        / ChargeType: {!totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c}
+                                        / AllowManualAdj: {!totalsItem.summaryGroupSO.Apttus_Config2__AllowManualAdjustment__c}
+                                        / IsBlue: {!isModelBlue}
+                                </apex:outputText>
+                            </apex:column -->
+
+                            <!--<apex:column >
+                                <apex:facet name="header">{!$Label.Apttus_Config2__Group}</apex:facet>
+                                <apex:outputField value="{!totalsItem.summaryGroupSO.BMC_Group_Name__c}"
+                                    styleClass="{!IF((totalsItem.summaryGroupSO.Apttus_Config2__LineType__c == 'Grand Total'), 'grandTotal', '')}" />
+                            </apex:column>-->
+
+                            <apex:column style="text-align:center">
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Apttus_Config2__Charge}<br></br>{!$Label.Apttus_Config2__Type}</apex:outputText>
+                                </apex:facet>
+                                <apex:outputField value="{!totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c}" />
+                            </apex:column>
+
+                            <apex:column style="text-align:right">
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Apttus_Config2__List}<br></br>{!$Label.Apttus_Config2__Price}</apex:outputText>                                
+                                </apex:facet>
+                                <apex:outputPanel styleClass="{!IF((totalsItem.summaryGroupSO.Apttus_Config2__LineType__c == 'Grand Total'), 'grandTotal', '')}">
+                                    <apex:outputField value="{!totalsItem.summaryGroupSO.Apttus_Config2__BaseExtendedPrice__c}"
+                                        rendered="{!baseController.IsMultiCurrency}" />
+                                    <apex:outputText value="{0,number,currency}"
+                                        rendered="{!NOT(baseController.IsMultiCurrency)}">
+                                        <apex:param value="{!totalsItem.summaryGroupSO.Apttus_Config2__BaseExtendedPrice__c}" />
+                                    </apex:outputText>
+                                </apex:outputPanel>
+                            </apex:column>
+
+                            <apex:column style="text-align:center">
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Apttus_Config2__Adjustment}&nbsp;{!$Label.Apttus_Config2__Type}</apex:outputText>
+                                </apex:facet>
+                                <apex:outputField value="{!totalsItem.summaryGroupSO.Apttus_Config2__AdjustmentType__c}"/>
+                                <!-- Shabbir 10/27 Goal Seek for GOld not working.  So removed the isGoldModel condition -->
+                                <!-- <apex:selectList size="1"
+                                    value="{!totalsItem.summaryGroupSO.Apttus_Config2__AdjustmentType__c}"
+                                    multiselect="false" required="false"
+                                    rendered="{!(baseController.showView) && 
+                                 (totalsItem.summaryGroupSO.Apttus_Config2__AllowManualAdjustment__c) &&
+                                 (totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c != 'Existing Run-rate') &&
+                                 (totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c != 'Migration Allowance') &&
+                                 (AND(totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c != 'Support Price',  NOT(isModelGold)))}">
+                                    <apex:selectOptions value="{!totalsItem.adjustmentTypeItems}"></apex:selectOptions>
+                                </apex:selectList>
+                                 
+                                <apex:selectList size="1"
+                                    value="{!totalsItem.summaryGroupSO.Apttus_Config2__AdjustmentType__c}"
+                                    multiselect="false" required="false"
+                                    rendered="{!(baseController.showView) && 
+                                 (totalsItem.summaryGroupSO.Apttus_Config2__AllowManualAdjustment__c) &&
+                                 (totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c != 'Existing Run-rate') &&
+                                 (totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c != 'Migration Allowance') &&
+                                 (totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c != 'Support Price') &&
+                                 (totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c != 'Adjustment')}">
+                                    <apex:selectOptions value="{!totalsAdjTypes}"></apex:selectOptions>
+                                </apex:selectList>-->
+                            </apex:column>
+
+                            <apex:column style="text-align:right">
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Apttus_Config2__Adjustment}<br></br>{!$Label.apttus_config2__amount}</apex:outputText>
+                                </apex:facet>
+                                <apex:outputText value="{0,number}"
+                                    rendered="{!(baseController.showFinalize) || 
+                                      (NOT(totalsItem.summaryGroupSO.Apttus_Config2__AllowManualAdjustment__c)) ||
+                                      (AND((totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c == 'Support Price')
+                                            , (totalsItem.summaryGroupSO.Apttus_Config2__LineType__c != 'Total')))}" >
+                                    <apex:param value="{!totalsItem.summaryGroupSO.Apttus_Config2__AdjustmentAmount__c}" />
+                                </apex:outputText>
+                                <!-- Shabbir 10/27 Goal Seek for GOld not working. So removed the isGoldModel condition-->
+                                <!-- 
+                                <apex:inputField value="{!totalsItem.summaryGroupSO.Apttus_Config2__AdjustmentAmount__c}"
+                                    onkeypress="return aptIgnoreEnterKey(event);"
+                                    style="width:60px"
+                                    rendered="{!(baseController.showView) && 
+                                     (totalsItem.summaryGroupSO.Apttus_Config2__AllowManualAdjustment__c) &&
+                                    (totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c != 'Existing Run-rate') &&
+                                    (totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c != 'Migration Allowance') &&
+                                    (AND(totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c != 'Support Price', NOT(isModelGold)))}" />
+                                  -->
+                              <apex:inputField value="{!totalsItem.summaryGroupSO.Apttus_Config2__AdjustmentAmount__c}"
+                                    onkeypress="return aptIgnoreEnterKey(event);"
+                                    style="width:60px"
+                                    rendered="{!(baseController.showView) && 
+                                     (totalsItem.summaryGroupSO.Apttus_Config2__AllowManualAdjustment__c) &&
+                                    (totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c != 'Existing Run-rate') &&
+                                    (totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c != 'Migration Allowance') &&
+                                    (totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c != 'Support Price') &&
+                                    (totalsItem.summaryGroupSO.Apttus_Config2__ChargeType__c != 'Adjustment')}" />
+                                  
+                            </apex:column>
+
+                            <apex:column style="text-align:right">
+                                <apex:facet name="header">
+                                    <apex:outputText >{!$Label.Apttus_Config2__Net}<br></br>{!$Label.Apttus_Config2__Price}</apex:outputText>
+                                </apex:facet>
+                                <apex:outputPanel styleClass="{!IF((totalsItem.summaryGroupSO.Apttus_Config2__LineType__c == 'Grand Total'), 'grandTotal', '')}">
+                                    <apex:outputField value="{!totalsItem.summaryGroupSO.Apttus_Config2__NetPrice__c}"
+                                        rendered="{!baseController.IsMultiCurrency}" />
+                                    <apex:outputText value="{0,number,currency}"
+                                        style="{!IF(baseController.showFinalize, 'font-weight:bold;', '')}"
+                                        rendered="{!NOT(baseController.IsMultiCurrency)}">
+                                        <apex:param value="{!totalsItem.summaryGroupSO.Apttus_Config2__NetPrice__c}" />
+                                    </apex:outputText>
+                                </apex:outputPanel>
+                            </apex:column>
+
+                           <!-- <apex:column style="text-align:right">
+                                <apex:facet name="header">Total<br></br>Adj. (%)</apex:facet>
+                                <apex:outputPanel styleClass="{!IF((totalsItem.summaryGroupSO.Apttus_Config2__LineType__c == 'Grand Total'), 'grandTotal', '')}">
+                                    <apex:outputField value="{!totalsItem.summaryGroupSO.Total_Discount__c}"
+                                        rendered="{!baseController.IsMultiCurrency}" />
+                                    <apex:outputText value="{0,number,currency}"
+                                        rendered="{!NOT(baseController.IsMultiCurrency)}">
+                                        <apex:param value="{!totalsItem.summaryGroupSO.Total_Discount__c}" />
+                                    </apex:outputText>
+                                </apex:outputPanel>
+                            </apex:column>-->
+                            
+                        </apex:pageBlockTable>
+                    </apex:outputPanel>
+                </apex:tab>
+                
+            </apex:tabPanel>
+        </apex:pageBlock>
+
+        <!-- This is the content of the confirmation dialog -->
+        <apex:outputPanel >
+            <div id="confirmationPanel" style="display: none">
+            <div class="hd"><apex:outputText value="{!$Label.apttus_config2__removeconfirmation}" /></div>
+            <div class="bd"><apex:outputText value="{!$Label.apttus_config2__removeproductmessage}" /></div>
+            <div class="bd"><apex:actionRegion >
+                <div style="text-align: center; padding-left: 4px;"><apex:commandButton value="{!$Label.apttus_config2__yes}"
+                    onclick="YAHOO.force.com.remove();" style="width: 50px;"
+                    immediate="true"
+                    oncomplete="YAHOO.force.com.confirmationPanel.hide();" /> <apex:commandButton value="{!$Label.apttus_config2__no}" style="width: 50px;"
+                    onclick="YAHOO.force.com.confirmationPanel.hide();return false;" />
+                </div>
+            </apex:actionRegion></div>
+            </div>
+        </apex:outputPanel>
+
+        <apex:actionFunction name="invokeApplyAllAdjustments"
+            action="{!applyAllAdjustments}" reRender="idErrorMsg, idTabPanel, idConstraintRuleResult, migrationVars, dealACVPanel"
+            oncomplete="YAHOO.force.com.waitPanel.hide();">
+        </apex:actionFunction>
+
+        <apex:actionFunction name="invokeApplyAllAdjustmentsFinalize"
+            action="{!applyAllAdjustments}" reRender="idErrorMsg"
+            oncomplete="onApplyAllAdjustmentActionTwiceFinalizeComplete();">
+        </apex:actionFunction>
+        <!--<apex:actionFunction name="invokeApplyAllAdjustmentActionTwiceFinalizeComplete"
+            action="{!doSaveAndNext}" reRender="idErrorMsg, idTopNavStage, idTopNavActions, idViewBlock, idConstraintRuleResult"
+            oncomplete="YAHOO.force.com.waitPanel.hide();">
+        </apex:actionFunction>-->
+        <!-- <apex:actionFunction name="invokeDoDeleteLineItem"
+            action="{!baseController.doDeleteLineItem}" reRender="idErrorMsg, idTabPanel"
+            oncomplete="YAHOO.force.com.waitPanel.hide();">
+            <apex:param name="firstParam" assignTo="{!baseController.lineItemLineNbr}" value="" />
+        </apex:actionFunction>
+         -->
+        <!--<apex:actionFunction name="invokeDoDeleteLineItem"
+            action="{!DeleteLineItem}" reRender="idErrorMsg, idTabPanel,dealACVPanel"
+            oncomplete="YAHOO.force.com.waitPanel.hide();">
+            <apex:param name="firstParam" assignTo="{!baseController.lineItemLineNbr}" value="" />
+        </apex:actionFunction>
+
+        <apex:actionFunction name="invokeDoHideMessage"
+            action="{!baseController.doHideMessage}" reRender="idErrorMsg"
+            oncomplete="YAHOO.force.com.waitPanel.hide();">
+            <apex:param name="param" assignTo="{!baseController.appliedActionInfoId}" value="" />
+        </apex:actionFunction>-->
+                
+        <!--<apex:actionFunction name="invokeDoGetCtxProductDetail"
+                             action="{!baseController.doGetCtxProductDetail}" 
+                             reRender="idCtxProductDetail"
+                             oncomplete="showProductDetailPanel();">
+            <apex:param name="param" assignTo="{!baseController.ctxProductId}" value="" />
+        </apex:actionFunction>-->
+        
+        <!-- <apex:actionFunction name="invokeDoProcessMoreRules" 
+                             action="{!baseController.doProcessMoreRules}"
+                             reRender="idErrorMsg, idTabPanel"
+                             oncomplete="onActionComplete();" />  -->
+        <apex:actionFunction name="sfdcDoProcessMoreRules" 
+                             action="{!baseController.doProcessMoreRules}"
+                             reRender="idErrorMsg, idTabPanel"
+                             oncomplete="onActionComplete2();" />
+
+        <!-- This is the product details dialog -->
+        <apex:outputPanel >
+            <div id="productDetailPanel" style="display: none">
+                <apex:outputPanel id="idCtxProductDetail">
+                    <div class="hd">
+                        <apex:outputPanel >
+                            <apex:outputfield value="{!baseController.ctxProduct.Name}" />
+                        </apex:outputPanel> 
+              
+                    </div> 
+                    <div class="bd">
+                        <apex:pageBlock >
+                            <apex:pageBlockSection columns="1">
+                                <apex:outputField value="{!baseController.ctxProduct.Description}" />                       
+                            </apex:pageBlockSection>
+                        </apex:pageBlock>
+                    </div>
+                </apex:outputPanel> 
+            </div>
+        </apex:outputPanel>
+
+    </apex:form>
+
+    <!-- This is the content of the add miscellaneous line item dialog -->
+    <apex:outputPanel >
+        <div id="miscItemPanel" style="display: none">
+        <div class="hd"><apex:outputText value="{!$Label.apttus_config2__addmiscellaneousitem}" /></div>
+        <div class="bd"><apex:form >
+            <apex:actionRegion >
+                <apex:pageBlock >
+                    <apex:pageBlockSection columns="1">
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="{!$ObjectType.Apttus_Config2__LineItem__c.Fields.Apttus_Config2__ChargeType__c.Label}"
+                                for="idMiscChargeType" />
+
+                            <apex:outputPanel >
+                                <apex:selectList id="idMiscChargeType" size="1"
+                                    value="{!baseController.miscLineItemSO.Apttus_Config2__ChargeType__c}"
+                                    multiselect="false" required="false">
+                                    <apex:selectOptions value="{!baseController.miscChargeTypeItems}"></apex:selectOptions>
+                                </apex:selectList>
+                                <script>
+                                            var fldMiscChargeType = document.getElementById("{!$Component.idMiscChargeType}");
+                                        
+                                        </script>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="{!$Label.apttus_config2__amount}"
+                                for="idMiscAmount" />
+                            <apex:outputPanel >
+                                <apex:inputField id="idMiscAmount"
+                                    onkeypress="return aptIgnoreEnterKey(event);"
+                                    value="{!baseController.miscLineItemSO.Apttus_Config2__BasePrice__c}" />
+
+                                <script>
+                                            var fldMiscAmount = document.getElementById("{!$Component.idMiscAmount}");
+                                            
+                                        </script>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:inputField id="idMiscDescription"
+                            onkeypress="return aptIgnoreEnterKey(event);"
+                            value="{!baseController.miscLineItemSO.Apttus_Config2__Description__c}" />
+
+
+                        <script>
+                                    var fldMiscDescription = document.getElementById("{!$Component.idMiscDescription}");
+                                    
+                                </script>
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+                <div style="text-align: center;"><apex:commandButton value="{!$Label.apttus_config2__ok}" action="{!baseController.doAddMiscLineItem}"
+                    reRender="idErrorMsg, idTabPanel" onclick="onOkActionClick();"
+                    oncomplete="onOkActionComplete();" /> <apex:commandButton value="{!$Label.apttus_config2__cancel}" immediate="true"
+                    reRender="idErrorMsg, idTabPanel"
+                    oncomplete="YAHOO.force.com.miscItemPanel.hide();" /></div>
+            </apex:actionRegion>
+        </apex:form></div>
+        </div>
+    </apex:outputPanel>
+
+</apex:page>

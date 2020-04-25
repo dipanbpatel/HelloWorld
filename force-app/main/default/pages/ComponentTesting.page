@@ -1,0 +1,65 @@
+<apex:page controller="MyController" tabStyle="Account">
+    <style>
+    .locationError { color: blue; font-weight: strong;}
+    .employeeError { color: green; font-weight: strong;}
+    </style>
+
+    <apex:form > 
+        <apex:pageBlock title="Hello {!$User.FirstName}!">
+        <apex:pageBlockButtons >
+                <apex:commandButton action="{!save}" value="Save12"/>
+            </apex:pageBlockButtons>
+            <apex:sectionHeader title="One of Your Opportunities" subtitle="Exciting !"/>
+            <apex:pageBlockSection title="My Content Section" columns="2">
+            
+                 <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Account Name" for="account__name"/>
+                    <apex:inputText value="{!account.name}" id="account__name"/> 
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Account Name" for="account__name"/>
+                    <apex:inputText value="{!account.name}" id="account__name"/> 
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <apex:panelBar >
+
+                <apex:panelBarItem label="Item 1">data 1</apex:panelBarItem>
+        
+                <apex:panelBarItem label="Item 2">data 2</apex:panelBarItem>
+        
+                <apex:panelBarItem label="Item 3">data 3</apex:panelBarItem>
+        
+            </apex:panelBar>
+        This is your new page for the {!name} controller. <br/>
+        You are viewing the {!account.name} account.
+
+        <p>Number of Locations: <apex:inputField value="{!account.NumberofLocations__c}" 
+            id="Location_validation"/> 
+        (Enter an alphabetic character here, then click Save to see what happens.) </p>
+           
+        <p>Number of Employees: <apex:inputField value="{!account.NumberOfEmployees}"
+            id="Employee_validation"/> 
+        (Enter an alphabetic character here, then click Save to see what happens.) </p>
+            <p /> 
+        <apex:commandButton action="{!save}" value="Save"/>    
+         <p />
+        <apex:messages /> 
+        <apex:panelGrid columns="3" id="theGrid">
+            <apex:outputText value="First" id="theFirst"/>
+            <apex:outputText value="Second" id="theSecond"/>
+            <apex:outputText value="Third" id="theThird"/>
+            <apex:outputText value="Fourth" id="theFourth"/>
+        </apex:panelGrid>
+        
+        <apex:panelGrid columns="3" id="theGrid1">
+        <apex:outputText value="First" id="theFirst1"/>
+        <apex:outputText value="Second" id="theSecond1"/>
+        <apex:panelGroup id="theGroup">
+            <apex:outputText value="Third" id="theThird1"/>
+            <apex:outputText value="Fourth" id="theFourth1"/>
+        </apex:panelGroup>
+    </apex:panelGrid> 
+        </apex:pageBlock>
+         
+    </apex:form>  
+</apex:page>

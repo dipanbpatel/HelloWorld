@@ -1,0 +1,14 @@
+<apex:page standardController="Employee__c"    >
+<!--<apex:includeScript value="{!$Resource.TestJsFile}"/>-->
+    Testing of Employee 
+  <apex:pageBlock >
+    <apex:pageBlockTable value="{!Employee__c}" var="a">
+      <apex:column value="{!a.First_Name__c}"/>
+       <apex:column value="{!a.Last_Name__c}"/>
+    </apex:pageBlockTable>
+  </apex:pageBlock>
+  <script>
+  //sayHi();
+  </script>
+  
+</apex:page>
