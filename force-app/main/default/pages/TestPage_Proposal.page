@@ -1,0 +1,6 @@
+<apex:page standardController="Apttus__AgreementLineItem__c"
+    recordSetVar="proposalLineItem">
+
+
+    
+</apex:page>

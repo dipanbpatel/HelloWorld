@@ -1,0 +1,17 @@
+<aura:component access="global" controller="ImportOfflineDocController"
+                implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction">
+    <aura:attribute name="agreementId" type="Id" default=""/>	
+    <aura:attribute name="fileToBeUploaded" type="Object[]"/>
+    Start_Of_Session_Id{!$Api.Session_ID}End_Of_Session_Id
+    <lightning:fileUpload label="Attach receipt"
+        name="fileUploader"
+        multiple="true"        
+        recordId="{!v.recordId}"
+        onuploadfinished="{!c.handleUploadFinished}"
+                          aura:id="fileId"/>
+    <!--<lightning:input aura:id="fileId" type="file" 
+                     files="{!v.fileToBeUploaded}"
+                     name="file" 
+                     label="Upload Attachment" multiple="false"/>    
+    <button class="slds-button slds-button_brand" onclick="{!c.doSave}">Upload Attachment</button> -->
+</aura:component>

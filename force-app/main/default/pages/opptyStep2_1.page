@@ -1,0 +1,17 @@
+<apex:page controller="newOpportunityController" tabStyle="Opportunity">
+      <apex:form >
+      <apex:sectionHeader title="Second Step Part2" subtitle="3 of 4 steps"/>
+      <apex:pageBlock title="Second Block Part2">
+          <apex:pageBlockButtons >
+              <apex:commandButton value="Next" action="{!step3}" />
+              <apex:commandButton value="Previous" action="{!step2}" />
+          </apex:pageBlockButtons>
+          <apex:pageBlockSection title="Second Section Part2">
+              
+              <apex:inputField value="{!position.Close_Date__c}"/>
+              <apex:inputField value="{!position.Travel_Required__c}"/>
+              <apex:inputField value="{!position.Min_Salary__c}" />
+          </apex:pageBlockSection>
+      </apex:pageBlock>
+      </apex:form>
+</apex:page>

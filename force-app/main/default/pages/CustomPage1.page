@@ -1,0 +1,33 @@
+<apex:page controller="MyCustomController" tabStyle="Interview1__tab" >
+
+<apex:includeScript value="{!$Resource.jquery_1_9_1}"/>
+<script >
+$(document).ready(function(){
+    alert($("input[id$=editButton],input[id$=saveButton],input[id$=cancelButton]").length);
+    $("input[id$=editButton],input[id$=saveButton],input[id$=cancelButton]").css("display","none");
+});
+
+</script>
+ <apex:form > 
+<apex:pageBlock title="Positions List">
+    
+    <apex:pageblockTable value="{!positions}" var="pos" >
+        <apex:column ondblclick="showButtons(this)">
+            <apex:outputfield value="{!pos.name}" >
+            
+                <input type="button" id="{!pos.id}_editButton" value="Edit"/>
+                <input type="button" id="{!pos.id}_saveButton" value="Save"/>
+                <input type="button" id="{!pos.id}_cancelButton" value="Cancel"/>
+                
+                
+                <apex:inlineEditSupport showOnEdit="{!pos.id}_saveButton, {!pos.id}_cancelButton" 
+                            hideOnEdit="{!pos.id}_editButton" event="ondblclick"  
+                            />
+            </apex:outputfield>
+        </apex:column>
+        
+        <apex:column value="{!pos.id}"/>
+    </apex:pageblockTable>    
+</apex:pageBlock>
+</apex:form>
+</apex:page>
